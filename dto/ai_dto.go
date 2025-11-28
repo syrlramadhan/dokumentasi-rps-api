@@ -139,9 +139,4 @@ type AIGenerationResult struct {
 	AIMetadata map[string]interface{} `json:"ai_metadata"`
 }
 
-// Generate RPS Options (from user request)
-type GenerateRPSOptions struct {
-	Language  string                 `json:"language"`
-	Tone      string                 `json:"tone"`
-	Overrides map[string]interface{} `json:"overrides,omitempty"`
-}
+// Note: GenerateRPSOptions is defined in generated_rps_dto.go

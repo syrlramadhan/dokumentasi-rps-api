@@ -37,16 +37,23 @@ type CompleteGenerationRequest struct {
 
 // GenerateRPSRequest - request body for POST /generate
 type GenerateRPSRequest struct {
-	TemplateVersionID uuid.UUID        `json:"template_version_id" validate:"required,uuid"`
-	CourseID          uuid.UUID        `json:"course_id" validate:"required,uuid"`
-	Options           *GenerateOptions `json:"options" validate:"omitempty"`
+	TemplateVersionID uuid.UUID           `json:"template_version_id" validate:"required,uuid"`
+	CourseID          uuid.UUID           `json:"course_id" validate:"required,uuid"`
+	GeneratedBy       *uuid.UUID          `json:"generated_by" validate:"omitempty,uuid"`
+	Options           *GenerateRPSOptions `json:"options" validate:"omitempty"`
 }
 
-// GenerateOptions - options for RPS generation
-type GenerateOptions struct {
-	Language  string                 `json:"language" validate:"omitempty,oneof=id en"`
-	Tone      string                 `json:"tone" validate:"omitempty,oneof=formal informal"`
-	Overrides map[string]interface{} `json:"overrides" validate:"omitempty"`
+// GenerateRPSOptions - options for RPS generation
+type GenerateRPSOptions struct {
+	Language      string                 `json:"language" validate:"omitempty"`
+	Tone          string                 `json:"tone" validate:"omitempty"`
+	DosenPengampu string                 `json:"dosen_pengampu" validate:"omitempty"`
+	Semester      string                 `json:"semester" validate:"omitempty"`
+	Prasyarat     string                 `json:"prasyarat" validate:"omitempty"`
+	ProgramStudi  string                 `json:"program_studi" validate:"omitempty"`
+	Fakultas      string                 `json:"fakultas" validate:"omitempty"`
+	TahunAkademik string                 `json:"tahun_akademik" validate:"omitempty"`
+	Overrides     map[string]interface{} `json:"overrides" validate:"omitempty"`
 }
 
 // GenerateRPSResponse - response for POST /generate

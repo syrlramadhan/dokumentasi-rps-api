@@ -35,6 +35,7 @@ func SetupRoutes(r *gin.Engine, db *gorm.DB, mongoDB *mongo.Database) {
 	generatedRPSService := services.NewGeneratedRPSService(generatedRPSRepo)
 	auditLogService := services.NewAuditLogService(auditLogRepo)
 	aiService := services.NewAIService(aiPromptRepo, aiGenerationRepo, promptTemplateRepo)
+	exportService := services.NewExportService()
 
 	// Initialize controllers
 	userController := controllers.NewUserController(userService)
@@ -45,6 +46,7 @@ func SetupRoutes(r *gin.Engine, db *gorm.DB, mongoDB *mongo.Database) {
 	generatedRPSController := controllers.NewGeneratedRPSController(generatedRPSService)
 	auditLogController := controllers.NewAuditLogController(auditLogService)
 	aiController := controllers.NewAIController(aiService, generatedRPSService, templateVersionService, courseService)
+	exportController := controllers.NewExportController(exportService, generatedRPSService)
 
 	// API v1 group
 	v1 := r.Group("/api/v1")
@@ -136,6 +138,15 @@ func SetupRoutes(r *gin.Engine, db *gorm.DB, mongoDB *mongo.Database) {
 			generated.PUT("/:id", generatedRPSController.Update)
 			generated.PATCH("/:id/status", generatedRPSController.UpdateStatus)
 			generated.DELETE("/:id", generatedRPSController.Delete)
+		}
+
+		// Export routes - PDF, HTML, DOCX
+		export := v1.Group("/export")
+		{
+			export.GET("/formats", exportController.GetExportFormats)
+			export.GET("/:id/pdf", exportController.ExportToPDF)
+			export.GET("/:id/html", exportController.ExportToHTML)
+			export.GET("/:id/preview", exportController.ExportToHTMLPreview)
 		}
 
 		// Admin routes

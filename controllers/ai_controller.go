@@ -80,6 +80,7 @@ func (ctrl *AIController) GenerateRPSWithAI(c *gin.Context) {
 	createReq := &dto.CreateGeneratedRPSRequest{
 		TemplateVersionID: &req.TemplateVersionID,
 		CourseID:          &req.CourseID,
+		GeneratedBy:       req.GeneratedBy,
 	}
 
 	generatedRPS, err := ctrl.generatedRPSService.Create(createReq)
@@ -107,7 +108,7 @@ func (ctrl *AIController) GenerateRPSWithAI(c *gin.Context) {
 		"credits": course.Credits,
 	}
 
-	// Build options
+	// Build options - copy all fields from request
 	options := dto.GenerateRPSOptions{
 		Language: "Indonesia",
 		Tone:     "formal",
@@ -118,6 +119,24 @@ func (ctrl *AIController) GenerateRPSWithAI(c *gin.Context) {
 		}
 		if req.Options.Tone != "" {
 			options.Tone = req.Options.Tone
+		}
+		if req.Options.DosenPengampu != "" {
+			options.DosenPengampu = req.Options.DosenPengampu
+		}
+		if req.Options.Semester != "" {
+			options.Semester = req.Options.Semester
+		}
+		if req.Options.Prasyarat != "" {
+			options.Prasyarat = req.Options.Prasyarat
+		}
+		if req.Options.ProgramStudi != "" {
+			options.ProgramStudi = req.Options.ProgramStudi
+		}
+		if req.Options.Fakultas != "" {
+			options.Fakultas = req.Options.Fakultas
+		}
+		if req.Options.TahunAkademik != "" {
+			options.TahunAkademik = req.Options.TahunAkademik
 		}
 		options.Overrides = req.Options.Overrides
 	}
@@ -180,6 +199,7 @@ func (ctrl *AIController) GenerateRPSAsync(c *gin.Context) {
 	createReq := &dto.CreateGeneratedRPSRequest{
 		TemplateVersionID: &req.TemplateVersionID,
 		CourseID:          &req.CourseID,
+		GeneratedBy:       req.GeneratedBy,
 	}
 
 	generatedRPS, err := ctrl.generatedRPSService.Create(createReq)
@@ -231,7 +251,7 @@ func (ctrl *AIController) processGenerationAsync(jobID uuid.UUID, req dto.Genera
 		"credits": course.Credits,
 	}
 
-	// Build options
+	// Build options - copy all fields from request
 	options := dto.GenerateRPSOptions{
 		Language: "Indonesia",
 		Tone:     "formal",
@@ -242,6 +262,24 @@ func (ctrl *AIController) processGenerationAsync(jobID uuid.UUID, req dto.Genera
 		}
 		if req.Options.Tone != "" {
 			options.Tone = req.Options.Tone
+		}
+		if req.Options.DosenPengampu != "" {
+			options.DosenPengampu = req.Options.DosenPengampu
+		}
+		if req.Options.Semester != "" {
+			options.Semester = req.Options.Semester
+		}
+		if req.Options.Prasyarat != "" {
+			options.Prasyarat = req.Options.Prasyarat
+		}
+		if req.Options.ProgramStudi != "" {
+			options.ProgramStudi = req.Options.ProgramStudi
+		}
+		if req.Options.Fakultas != "" {
+			options.Fakultas = req.Options.Fakultas
+		}
+		if req.Options.TahunAkademik != "" {
+			options.TahunAkademik = req.Options.TahunAkademik
 		}
 		options.Overrides = req.Options.Overrides
 	}

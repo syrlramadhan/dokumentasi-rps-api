@@ -462,10 +462,52 @@ Panduan penyusunan:
 func (s *aiService) buildUserPrompt(courseData map[string]interface{}, templateDef map[string]interface{}, options dto.GenerateRPSOptions) string {
 	templateJSON, _ := json.MarshalIndent(templateDef, "", "  ")
 
+	// Default values
 	semester := "Ganjil 2024/2025"
+	dosenPengampu := "Tim Dosen"
+	prasyarat := "-"
+	programStudi := ""
+	fakultas := ""
+
+	// Override with options
+	if options.Semester != "" {
+		semester = options.Semester
+	}
+	if options.DosenPengampu != "" {
+		dosenPengampu = options.DosenPengampu
+	}
+	if options.Prasyarat != "" {
+		prasyarat = options.Prasyarat
+	}
+	if options.ProgramStudi != "" {
+		programStudi = options.ProgramStudi
+	}
+	if options.Fakultas != "" {
+		fakultas = options.Fakultas
+	}
+
+	// Legacy overrides support
 	if options.Overrides != nil {
 		if sem, ok := options.Overrides["semester"].(string); ok && sem != "" {
 			semester = sem
+		}
+		if dosen, ok := options.Overrides["dosen_pengampu"].(string); ok && dosen != "" {
+			dosenPengampu = dosen
+		}
+		if prasy, ok := options.Overrides["prasyarat"].(string); ok && prasy != "" {
+			prasyarat = prasy
+		}
+	}
+
+	// Build program info section
+	programInfo := ""
+	if programStudi != "" || fakultas != "" {
+		programInfo = "\n\n## INFORMASI PROGRAM STUDI"
+		if programStudi != "" {
+			programInfo += fmt.Sprintf("\n- Program Studi: %s", programStudi)
+		}
+		if fakultas != "" {
+			programInfo += fmt.Sprintf("\n- Fakultas: %s", fakultas)
 		}
 	}
 
@@ -476,6 +518,8 @@ func (s *aiService) buildUserPrompt(courseData map[string]interface{}, templateD
 - Kode Mata Kuliah: %v
 - Jumlah SKS: %v
 - Semester: %s
+- Dosen Pengampu: %s
+- Prasyarat: %s%s
 
 ## TEMPLATE STRUKTUR (untuk referensi)
 %s
@@ -485,6 +529,8 @@ func (s *aiService) buildUserPrompt(courseData map[string]interface{}, templateD
 - Gaya penulisan: %s
 - Jumlah pertemuan: 16 minggu (UTS minggu ke-8, UAS minggu ke-16)
 - Waktu per pertemuan: 150 menit (3 SKS) atau sesuaikan dengan SKS
+- PENTING: Gunakan nama dosen "%s" untuk field dosen_pengampu
+- PENTING: Gunakan "%s" untuk field prasyarat
 
 ## KETENTUAN PENILAIAN
 - Total bobot harus = 100%%
@@ -496,8 +542,13 @@ Buatkan RPS yang lengkap dan berkualitas.`,
 		courseData["code"],
 		courseData["credits"],
 		semester,
+		dosenPengampu,
+		prasyarat,
+		programInfo,
 		string(templateJSON),
 		options.Language,
 		options.Tone,
+		dosenPengampu,
+		prasyarat,
 	)
 }
