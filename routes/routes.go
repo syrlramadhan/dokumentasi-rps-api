@@ -2,14 +2,17 @@ package routes
 
 import (
 	"github.com/gin-gonic/gin"
+	"go.mongodb.org/mongo-driver/mongo"
+	"gorm.io/gorm"
+
 	"github.com/syrlramadhan/dokumentasi-rps-api/controllers"
 	"github.com/syrlramadhan/dokumentasi-rps-api/repositories"
+	mongoRepo "github.com/syrlramadhan/dokumentasi-rps-api/repositories/mongo"
 	"github.com/syrlramadhan/dokumentasi-rps-api/services"
-	"gorm.io/gorm"
 )
 
-func SetupRoutes(r *gin.Engine, db *gorm.DB) {
-	// Initialize repositories
+func SetupRoutes(r *gin.Engine, db *gorm.DB, mongoDB *mongo.Database) {
+	// Initialize PostgreSQL repositories
 	userRepo := repositories.NewUserRepository(db)
 	programRepo := repositories.NewProgramRepository(db)
 	courseRepo := repositories.NewCourseRepository(db)
@@ -17,6 +20,11 @@ func SetupRoutes(r *gin.Engine, db *gorm.DB) {
 	templateVersionRepo := repositories.NewTemplateVersionRepository(db)
 	generatedRPSRepo := repositories.NewGeneratedRPSRepository(db)
 	auditLogRepo := repositories.NewAuditLogRepository(db)
+
+	// Initialize MongoDB repositories
+	aiPromptRepo := mongoRepo.NewAIPromptRepository(mongoDB)
+	aiGenerationRepo := mongoRepo.NewAIGenerationRepository(mongoDB)
+	promptTemplateRepo := mongoRepo.NewPromptTemplateRepository(mongoDB)
 
 	// Initialize services
 	userService := services.NewUserService(userRepo)
@@ -26,6 +34,7 @@ func SetupRoutes(r *gin.Engine, db *gorm.DB) {
 	templateVersionService := services.NewTemplateVersionService(templateVersionRepo)
 	generatedRPSService := services.NewGeneratedRPSService(generatedRPSRepo)
 	auditLogService := services.NewAuditLogService(auditLogRepo)
+	aiService := services.NewAIService(aiPromptRepo, aiGenerationRepo, promptTemplateRepo)
 
 	// Initialize controllers
 	userController := controllers.NewUserController(userService)
@@ -35,6 +44,7 @@ func SetupRoutes(r *gin.Engine, db *gorm.DB) {
 	templateVersionController := controllers.NewTemplateVersionController(templateVersionService)
 	generatedRPSController := controllers.NewGeneratedRPSController(generatedRPSService)
 	auditLogController := controllers.NewAuditLogController(auditLogService)
+	aiController := controllers.NewAIController(aiService, generatedRPSService, templateVersionService, courseService)
 
 	// API v1 group
 	v1 := r.Group("/api/v1")
@@ -107,10 +117,11 @@ func SetupRoutes(r *gin.Engine, db *gorm.DB) {
 			templateVersions.DELETE("/:id", templateVersionController.Delete)
 		}
 
-		// Generate routes
+		// Generate routes - AI powered
 		generate := v1.Group("/generate")
 		{
-			generate.POST("", generatedRPSController.Create)
+			generate.POST("", aiController.GenerateRPSAsync)       // Async - returns job_id immediately
+			generate.POST("/sync", aiController.GenerateRPSWithAI) // Sync - waits for result
 			generate.GET("/:job_id/status", generatedRPSController.FindByID)
 		}
 
@@ -141,12 +152,15 @@ func SetupRoutes(r *gin.Engine, db *gorm.DB) {
 				audit.DELETE("/:id", auditLogController.Delete)
 			}
 
-			// AI prompts (TODO: implement)
+			// AI Admin routes - MongoDB data
 			ai := admin.Group("/ai")
 			{
-				ai.GET("/prompts/:id", func(c *gin.Context) {
-					c.JSON(200, gin.H{"message": "AI prompt trace - TODO: implement"})
-				})
+				ai.GET("/stats", aiController.GetPromptStats)
+				ai.GET("/prompts", aiController.GetAllPrompts)
+				ai.GET("/prompts/:id", aiController.GetPromptByID)
+				ai.GET("/prompts/rps/:generated_rps_id", aiController.GetPromptsByGeneratedRPSID)
+				ai.GET("/generations", aiController.GetAllGenerations)
+				ai.GET("/generations/:generated_rps_id", aiController.GetGenerationByRPSID)
 			}
 		}
 

@@ -14,11 +14,18 @@ func main() {
 	// Load environment variables
 	config.LoadEnv()
 
-	// Connect to database
+	// Connect to PostgreSQL database
 	db, err := config.NewPostgresConnection()
 	if err != nil {
-		log.Fatalf("Failed to connect to database: %v", err)
+		log.Fatalf("Failed to connect to PostgreSQL: %v", err)
 	}
+
+	// Connect to MongoDB
+	mongoDB, err := config.NewMongoDBConnection()
+	if err != nil {
+		log.Fatalf("Failed to connect to MongoDB: %v", err)
+	}
+	defer config.CloseMongoDBConnection(mongoDB)
 
 	// Auto migrate models
 	err = db.AutoMigrate(
@@ -39,8 +46,8 @@ func main() {
 	// Setup Gin router
 	r := gin.Default()
 
-	// Setup routes
-	routes.SetupRoutes(r, db)
+	// Setup routes with both PostgreSQL and MongoDB
+	routes.SetupRoutes(r, db, mongoDB)
 
 	// Get port from environment variable
 	port := os.Getenv("APP_PORT")
